@@ -73,20 +73,17 @@ be AB magnitudes in the selected filter.
 - Planetary model for the CMD overlay (Sonora Bobcat, ATMO 2020, or Sonora Flame Skimmer)
 - Optional minimum and maximum plotted radii (0 and 10 arcsec by default)
 
-## Reference pack
+## Packaged reference data
 
-The app reads `data/cosmos3d_reference.npz`, a compact deployment artifact made
-from `catalogs/cosmos_v1.2_merged.fits`, `catalogs/type_in_3d.npy`, and
-`EE_dict.pkl`. Rebuild it from the repository root with:
+The repository already includes the compact reference data needed by the app in
+`data/cosmos3d_reference.npz`. No additional catalogs, calibration files, or
+source-data downloads are required to run MIRAGE.
 
-```powershell
-python jittles/build_reference_pack.py
-```
-
-The pack contains sorted magnitude arrays, per-filter total magnitudes,
-encircled energies, survey areas, a binned CMD, and compact source-index
-mappings for applying CMD constraints. It does not contain coordinates or
-source identifiers.
+The reference data contain the filter-dependent source distributions,
+encircled-energy corrections, survey areas, and binned color-magnitude data used
+by the calculations. The original survey catalogs used to create this packaged
+artifact are not part of the public release. Rebuilding the artifact is a
+maintainer-only operation requiring separately managed source data.
 
 ## Scientific conventions inherited from the notebooks
 
