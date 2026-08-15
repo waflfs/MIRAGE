@@ -1,49 +1,239 @@
-# JWST Extragalactic Contamination Tool
+# MIRAGE
 
-Public beta release. The hosted application is intended for exploratory
-scientific use; please report issues and cite the accompanying Forney et al.
-work when using its results.
+**Modeling Interloper Risk from Alignments with Galaxies in Exoplanet searches**
 
-This tool estimates
-the probability that at least one extragalactic background source falls within a
-JWST direct-imaging search radius. It supersedes the surface-brightness method in
-`../jit` with the aperture-photometry framework in the Forney et al. (2026) draft.
+MIRAGE estimates the probability that one or more extragalactic sources could
+be mistaken for a directly imaged planetary companion with JWST. It implements
+the aperture-photometry method described by Forney et al. (2026), replacing the
+legacy surface-brightness calculation in `jit`.
 
-## Method
+This is a public beta for exploratory scientific use. Results should be
+interpreted with the assumptions and limitations documented below.
 
-For an uploaded two-column contrast curve, the tool calculates a limiting
-magnitude as a function of angular separation. The field is split at a user-set
-region cutoff:
+## What the app calculates
 
-- Inside the cutoff (contrast-limited), all nonstellar COSMOS-3D sources whose
-  core-aperture magnitude is brighter than the encircled-energy-corrected limit
-  are counted.
-- Outside the cutoff (background-limited), only nonstellar COSMOS-3D sources
-  consistent with the empirical point-source compactness bounds and brighter
-  than the total-magnitude limit are counted.
+For a supplied contrast curve, MIRAGE calculates the cumulative probability of
+at least one contaminant as a function of angular separation. It also reports
+the expected contaminant count at the selected separation of interest and
+within the plotted search radius. An optional second probability curve applies
+user-selected color and magnitude constraints to the catalog sources.
 
-The radial surface density is integrated in circular annuli to obtain the
-expected contaminant count, lambda. The reported probability is
-`P(X >= 1) = 1 - exp(-lambda)`.
+The calculation divides the field at the user-selected region cutoff:
+
+- **Contrast-limited region:** all nonstellar sources with finite flux in the
+  selected core aperture are counted when their core-aperture magnitude is
+  brighter than the corrected contrast limit. No point-source compactness cut
+  is applied in this region, because PSF subtraction can make resolved sources
+  appear point-like.
+- **Background-limited region:** only nonstellar sources classified as
+  point-like by the COSMOS-3D compactness selection are counted when their
+  total-magnitude measurement is brighter than the contrast limit.
+
+The transition is applied as `radius < region cutoff` for the inner regime and
+`radius >= region cutoff` for the outer regime.
+
+## Inputs and units
+
+- A two-column contrast curve: separation in arcseconds followed by either
+  flux ratio or delta magnitude. The parser accepts comma- or whitespace-
+  separated files, comments beginning with `#`, and one header row.
+- The filter associated with the curve: F115W, F150W, F200W, F277W, F356W,
+  or F444W.
+- Host-star magnitude in **AB magnitudes** in the selected contrast-curve
+  filter.
+- Region cutoff in arcseconds.
+- Core-aperture diameter: 0.05, 0.1, 0.2, or 0.3 arcsec.
+- System distance in parsecs. Distance is used for the planetary CMD tracks and
+  for rescaling the fiducial Carter curve; an uploaded observation-specific
+  curve is not distance-rescaled.
+- Minimum and maximum plotted separation. The default is 0 to 10 arcsec,
+  subject to the first separation in the supplied curve.
+- Optional color range in Vega `F200W-F444W` and optional magnitude range in
+  AB magnitudes in the selected contrast-curve filter. Each lower or upper
+  bound may be left blank; ranges are inclusive.
+- A planetary model for the CMD overlay: Sonora Bobcat, ATMO 2020, or Sonora
+  Flame Skimmer.
+
+## Contrast-curve processing
+
+In automatic unit-detection mode, a contrast-curve second column with median
+value below 0.1 is interpreted as a positive flux ratio and converted with
+`delta_mag = -2.5 log10(flux ratio)`. Otherwise the second column is treated as
+delta magnitude. Rows are sorted by separation, duplicate separations are
+averaged, and the curve is linearly interpolated onto the calculation grid.
+Beyond the curve's outermost measured separation, its final delta magnitude is
+held constant. The maximum requested radius must be larger than the curve's
+first separation.
+
+For an uploaded curve, the values are assumed to describe the entered host star,
+distance, and observing setup already. MIRAGE therefore uses the uploaded curve
+unchanged apart from unit conversion, interpolation, and outer-radius
+extrapolation.
+
+## COSMOS-3D photometry and source selection
+
+The packaged reference data are derived from the COSMOS-3D v1.2 merged catalog.
+The app does not load the original catalog at runtime; it reads the compact
+`data/cosmos3d_reference.npz` artifact included in this repository.
+
+The reference-pack builder uses the following catalog quantities in each of the
+six filters:
+
+- `f_auto_<filter>` and `e_auto_<filter>`: total flux and total-flux error in
+  microJy. Total AB magnitude is calculated as
+  `m_AB = -2.5 log10[(f_microJy * 10^-6) / 3631]`.
+- `f_aper_nat_<filter>` and `e_aper_nat_<filter>`: aperture fluxes and errors
+  for native aperture diameters 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, and 1.0
+  arcsec.
+
+Objects with `type_in_3d == 1` are treated as matched stars and removed from
+the contamination counts. The remaining nonstellar objects (`type_in_3d != 1`)
+are retained for the inner-aperture arrays and for the color-magnitude
+constraint arrays.
+
+### Point-source selection for the background-limited regime
+
+For each filter, the point-source list is built using total-flux S/N and
+compactness:
+
+`S/N = f_auto / e_auto`
+
+`compactness = f_aper(0.1 arcsec) / f_aper(0.3 arcsec)`
+
+The compactness uncertainty is propagated as
+
+`sigma_C = |C| sqrt[(sigma_0.3 / f_0.3)^2 + (sigma_0.1 / f_0.1)^2]`.
+
+An object is retained as point-like when total-flux S/N is greater than 5 and
+either its measured compactness lies inside the filter-specific interval or its
+1-sigma compactness interval overlaps that interval. The intervals are:
+
+| Filter | Compactness interval |
+|---|---:|
+| F115W | 0.50--0.75 |
+| F150W | 0.50--0.75 |
+| F200W | 0.50--0.70 |
+| F277W | 0.30--0.45 |
+| F356W | 0.27--0.37 |
+| F444W | 0.23--0.30 |
+
+The resulting point-source magnitudes are total `f_auto` AB magnitudes and are
+sorted by brightness for fast cumulative counting. The inner-regime arrays are
+different: they use the selected `f_aper_nat` core aperture for every
+nonstellar source with a finite core magnitude, without applying the S/N or
+compactness selection.
+
+### Encircled-energy corrections
+
+The selected core-aperture magnitude limit is corrected using the encircled
+energy value for the chosen filter and aperture. The values stored in the
+packaged reference data are:
+
+| Filter | EE(0.05) | EE(0.1) | EE(0.2) | EE(0.3) |
+|---|---:|---:|---:|---:|
+| F115W | 0.4330 | 0.6258 | 0.7752 | 0.8135 |
+| F150W | 0.3386 | 0.6260 | 0.7686 | 0.8129 |
+| F200W | 0.2339 | 0.5614 | 0.7019 | 0.8118 |
+| F277W | 0.1701 | 0.3706 | 0.6554 | 0.7358 |
+| F356W | 0.1155 | 0.2702 | 0.5944 | 0.6872 |
+| F444W | 0.0827 | 0.2015 | 0.5171 | 0.6739 |
+
+The survey areas used to convert counts to surface densities are 1932, 1930,
+1282, 1930, 1241, and 1936 arcmin^2 for F115W, F150W, F200W, F277W, F356W,
+and F444W, respectively.
+
+## Probability calculation
+
+For each radius, the code converts the contrast delta magnitude into two
+possible limiting magnitudes. In the contrast-limited region, the core limit is
+
+`m_core,lim = m_host,AB + delta_mag - 2.5 log10(EE)`.
+
+In the background-limited region, the total-flux limit is
+
+`m_total,lim = m_host,AB + delta_mag`.
+
+Because smaller magnitudes are brighter, the code counts catalog magnitudes
+strictly brighter than each limit. The cumulative count is divided by the
+filter-specific COSMOS-3D survey area to obtain a surface density in
+arcmin^-2. The expected number inside radius `r` is then calculated by
+integrating circular annuli:
+
+`lambda(r) = integral[0 to r] 2 pi r' Sigma(r') dr'`,
+
+where radius is converted from arcseconds to arcminutes before integration.
+The probability of at least one source is computed assuming a Poisson spatial
+process:
+
+`P(N >= 1) = 1 - exp[-lambda(r)]`.
+
+The expected number and probability are evaluated numerically with trapezoidal
+integration on a 900-sample radial grid augmented with the supplied curve
+separations, the region cutoff, and the requested minimum separation. In normal
+contrast-curve mode, the grid begins at the curve's first measured separation;
+the cumulative result is therefore zero interior to that starting separation.
+Contrast-less mode instead includes radius zero explicitly.
+
+## Fiducial Carter F444W curve
+
+Selecting **Use fiducial Carter F444W curve** fixes the filter to F444W and
+provides the Carter et al. (2023) curve. The code uses the Carter fiducial pair
+`m_F444W = 9.76` AB at 109 pc, corresponding to the quoted absolute magnitude
+4.57 AB. It identifies the faintest point of the digitized curve as the
+fiducial background limit, converts the total limit and background limit to
+flux, and subtracts the background flux to obtain the host-dependent residual.
+That residual is scaled by the target host's apparent-flux offset, the selected
+background flux floor is added back, and the resulting flux limit is converted
+to delta magnitude relative to the entered host magnitude. The user must supply
+the background-limiting F444W magnitude for the new observation. This is an
+approximate transformation for planning; a measured observation-specific curve
+should be used whenever available.
+
+## Contrast-less mode
 
 Contrast-less mode is intended for observations of very faint infrared hosts,
-such as white dwarfs. It ignores the contrast curve and host magnitude, treats
-the full field as background limited, and integrates the selected filter's full
-COSMOS-3D point-source surface density from zero separation.
+including white dwarfs, where the field can be treated as background limited. It
+ignores the contrast curve, host-star magnitude, region cutoff, and core-aperture
+choice. The complete selected-filter point-source list is divided by that
+filter's survey area to make a constant surface density, which is integrated
+from zero separation. This mode is not equivalent to setting the region cutoff
+to zero in a normal calculation, because a normal calculation still applies its
+contrast-derived detection limit to the point-source population.
 
-The second output is the Vega-system COSMOS-3D F200W-F444W versus F444W
-color-magnitude diagram. The user can overlay Sonora Bobcat, ATMO 2020, or
-Sonora Flame Skimmer planetary tracks shifted to the system distance. The
-packaged Flame Skimmer tracks use equilibrium chemistry, [M/H] = 0.0, and
-C/O = 0.458 (solar) from the
-[official model release](https://doi.org/10.5281/zenodo.20030439).
+## Color-magnitude constraints and CMD
 
-The interface provides CSV output plus 300 DPI PNG downloads for both plots.
-The CMD uses fixed 0.25-mag color by 0.5-mag F444W bins, normalized to the
-1282 arcmin² COSMOS-3D area, with empty bins shown in white and a logarithmic
-objects-per-arcmin²-per-bin colorbar.
+When enabled, the optional constraint mask is applied to the nonstellar
+source-level arrays using Vega `F200W-F444W` color and total AB magnitude in the
+selected filter. The mask is combined with the applicable core-aperture or
+point-source detection list in both radial regimes, producing a second expected
+number and probability curve. Blank lower or upper bounds are treated as
+unbounded; if both bounds for a quantity are blank, that quantity imposes no
+restriction.
 
-## Run
+The CMD itself uses only sources with `type_in_3d == 0` (the catalog galaxy
+class), F444W total-flux S/N greater than 5, and finite F200W and F444W total
+magnitudes. AB magnitudes are converted to Vega using offsets of 1.71 mag for
+F200W and 3.25 mag for F444W. The displayed CMD uses 0.25-mag color bins from
+-1 to 5 and 0.5-mag F444W bins from 13 to 27, divided by the 1282 arcmin^2
+COSMOS-3D F200W area. Empty bins are white and populated bins are shown on a
+logarithmic objects-per-arcmin^2-per-bin scale.
+
+Planetary tracks are shown at 10, 100, and 1000 Myr and shifted from absolute
+F444W magnitude to the entered distance using the distance modulus
+`5 log10(d / 10 pc)`. The available overlays are Sonora Bobcat, ATMO 2020, and
+Sonora Flame Skimmer. Their tracks are a model-comparison diagnostic, not an
+additional term in the contamination probability.
+
+## Packaged reference data
+
+The repository already includes the compact reference data needed by the app in
+`data/cosmos3d_reference.npz`. No additional catalogs, calibration files, or
+source-data downloads are required to run MIRAGE. The original survey catalogs
+used to create this packaged artifact are not part of the public release.
+Rebuilding the artifact is a maintainer-only operation requiring separately
+managed source data.
+
+## Run locally
 
 ```powershell
 python -m venv .venv
@@ -52,53 +242,14 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Select **Use fiducial Carter F444W curve** to use the packaged Carter et al.
-(2023) curve. Its flux-space host-dependent residual is rescaled using the
-entered host-star apparent magnitude and system distance; the user selects the
-background limiting magnitude added back during recomposition. Other filters
-require an uploaded curve, which is used unchanged. Host-star magnitudes must
-be AB magnitudes in the selected filter.
+## Scope and limitations
 
-## Inputs
-
-- Contrast curve: separation in arcsec plus flux ratio or delta-mag
-- Filter corresponding to that curve
-- Optional fiducial Carter F444W curve, with a selectable F444W AB background limiting magnitude
-- Optional contrast-less mode; the filter remains required but contrast-specific inputs are omitted
-- Host-star AB magnitude in that filter
-- Optional CMD color range (F200W-F444W, Vega) and magnitude range in the selected contrast-curve filter (AB); either bound may be left blank
-- Region cutoff in arcsec
-- Core-aperture diameter in arcsec (0.05, 0.1, 0.2, or 0.3)
-- System distance in parsecs
-- Planetary model for the CMD overlay (Sonora Bobcat, ATMO 2020, or Sonora Flame Skimmer)
-- Optional minimum and maximum plotted radii (0 and 10 arcsec by default)
-
-## Packaged reference data
-
-The repository already includes the compact reference data needed by the app in
-`data/cosmos3d_reference.npz`. No additional catalogs, calibration files, or
-source-data downloads are required to run MIRAGE.
-
-The reference data contain the filter-dependent source distributions,
-encircled-energy corrections, survey areas, and binned color-magnitude data used
-by the calculations. The original survey catalogs used to create this packaged
-artifact are not part of the public release. Rebuilding the artifact is a
-maintainer-only operation requiring separately managed source data.
-
-## Scientific conventions inherited from the notebooks
-
-- COSMOS-3D source detection requires total-flux S/N > 5 for point-source
-  classification.
-- Compactness is the 0.1 arcsec diameter aperture flux divided by the 0.3
-  arcsec diameter aperture flux; a source is point-like when its value or its
-  1-sigma interval overlaps the filter-specific empirical bounds.
-- Matched stars (`type_in_3d == 1`) are removed from contaminant counts.
-- Contrast-less mode uses the complete nonstellar point-source population and the selected filter's survey area, without applying a contrast-derived magnitude limit.
-- The fiducial Carter F444W curve is decomposed into a host-dependent flux term
-  and its original background floor. The host-dependent term is rescaled for
-  the entered host magnitude and distance, then recomposed with the selected
-  background limiting magnitude; uploaded curves are not rescaled.
-- The final contrast value is held constant beyond the measured curve.
-- When enabled, the color-magnitude constraint curve applies the entered Vega F200W-F444W color range and selected-filter AB magnitude range to catalog objects in both counting regimes.
-- Survey areas are 1932, 1930, 1282, 1930, 1241, and 1936 arcmin² for F115W
-  through F444W, respectively.
+The calculation assumes that the COSMOS-3D field represents the background
+population around the target and that sources follow a spatial Poisson process.
+It does not model galaxy clustering, target-field cosmic variance, extinction,
+source variability, or candidate-specific astrometry. The transition radius,
+compactness intervals, encircled-energy values, catalog completeness, and
+contrast-curve calibration are all potential sources of systematic error. The
+tool is intended for observation planning and candidate vetting; its probability
+is not, by itself, a classification of an individual candidate as planetary or
+extragalactic.

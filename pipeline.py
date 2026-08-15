@@ -620,27 +620,27 @@ def probability_figure(result: ContaminationResult):
         cutoff = float(result.region_cutoff_arcsec)
         if cutoff > left_edge:
             ax.text(
-                left_edge + 0.35 * (cutoff - left_edge),
+                cutoff - 0.08 * (cutoff - left_edge),
                 0.98,
                 "Contrast limited",
                 transform=ax.get_xaxis_transform(),
-                ha="center",
+                ha="right",
                 va="top",
                 color="#555555",
-                fontsize=10,
+                fontsize=9,
                 bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none", "pad": 2.0},
                 zorder=5,
             )
         if cutoff < right_edge:
             ax.text(
-                cutoff + 0.72 * (right_edge - cutoff),
+                cutoff + 0.08 * (right_edge - cutoff),
                 0.98,
                 "Background limited",
                 transform=ax.get_xaxis_transform(),
-                ha="center",
+                ha="left",
                 va="top",
                 color="#555555",
-                fontsize=10,
+                fontsize=9,
                 bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none", "pad": 2.0},
                 zorder=5,
             )
