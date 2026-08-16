@@ -625,7 +625,7 @@ def probability_figure(result: ContaminationResult):
         # only a small fraction of the displayed x-range, horizontal text can
         # extend beyond the axes, so rotate both labels while keeping each one
         # anchored at the top-left of its regime.
-        vertical_labels = min(left_span, right_span) / plot_span < 0.14
+        vertical_labels = min(left_span, right_span) / plot_span < 0.18
         label_y = 0.98
         label_rotation = 90 if vertical_labels else 0
         label_ha = "right" if vertical_labels else "left"
