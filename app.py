@@ -63,8 +63,8 @@ def _optional_range(lower_raw: str, upper_raw: str, label: str):
     return lower, upper
 
 
-st.set_page_config(page_title="JWST Extragalactic Contamination Tool", layout="wide")
-st.title("JWST Extragalactic Contamination Tool")
+st.set_page_config(page_title="MIRAGE", layout="wide")
+st.title("MIRAGE")
 st.caption("Extragalactic contamination probabilities for JWST direct imaging")
 
 
