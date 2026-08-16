@@ -65,7 +65,10 @@ def _optional_range(lower_raw: str, upper_raw: str, label: str):
 
 st.set_page_config(page_title="MIRAGE", layout="wide")
 st.title("MIRAGE")
-st.caption("Extragalactic contamination probabilities for JWST direct imaging")
+st.caption(
+    "Modeling Interloper Risk from Alignments with Galaxies in Exoplanet searches "
+    "| Extragalactic contamination probabilities for JWST direct imaging"
+)
 
 
 @st.cache_resource(show_spinner="Loading the COSMOS-3D reference population...")
@@ -79,6 +82,9 @@ def get_carter_fiducial_background_limit() -> float:
     return float(CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB + np.max(delta_mag))
 
 
+st.sidebar.markdown(
+    "[Read the MIRAGE README on GitHub](https://github.com/waflfs/MIRAGE)"
+)
 st.sidebar.header("Observation")
 contrast_less = st.sidebar.checkbox(
     "Contrast-less",
