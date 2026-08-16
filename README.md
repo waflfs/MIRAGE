@@ -4,8 +4,7 @@
 
 MIRAGE estimates the probability that one or more extragalactic sources could
 be mistaken for a directly imaged planetary companion with JWST. It implements
-the aperture-photometry method described by Forney et al. (2026), replacing the
-legacy surface-brightness calculation in `jit`.
+the aperture-photometry method for calculation contamination described by Forney et al. (2026).
 
 This is a public beta for exploratory scientific use. Results should be
 interpreted with the assumptions and limitations documented below.
@@ -73,8 +72,8 @@ extrapolation.
 ## COSMOS-3D photometry and source selection
 
 The packaged reference data are derived from the COSMOS-3D v1.2 merged catalog.
-The app does not load the original catalog at runtime; it reads the compact
-`data/cosmos3d_reference.npz` artifact included in this repository.
+The app does not load the original catalog at runtime (that would be too large); it 
+reads the `data/cosmos3d_reference.npz` reference file included in this repository.
 
 The reference-pack builder uses the following catalog quantities in each of the
 six filters:
@@ -86,10 +85,11 @@ six filters:
   for native aperture diameters 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, and 1.0
   arcsec.
 
-Objects with `type_in_3d == 1` are treated as matched stars and removed from
-the contamination counts. The remaining nonstellar objects (`type_in_3d != 1`)
-are retained for the inner-aperture arrays and for the color-magnitude
-constraint arrays.
+The `type_in_3d` is the type parameter from COSMOS-Web 2025 matched by source
+position to sources in COSMOS-3D. Objects with `type_in_3d == 1` are treated as 
+stars and removed from the contamination counts. The remaining nonstellar 
+objects (`type_in_3d != 1`) are retained for the inner-aperture arrays and for the 
+color-magnitude constraint arrays.
 
 ### Point-source selection for the background-limited regime
 
@@ -109,7 +109,6 @@ either its measured compactness lies inside the filter-specific interval or its
 1-sigma compactness interval overlaps that interval. The intervals are:
 
 | Filter | Compactness interval |
-|---|---:|
 | F115W | 0.50--0.75 |
 | F150W | 0.50--0.75 |
 | F200W | 0.50--0.70 |
@@ -117,11 +116,9 @@ either its measured compactness lies inside the filter-specific interval or its
 | F356W | 0.27--0.37 |
 | F444W | 0.23--0.30 |
 
-The resulting point-source magnitudes are total `f_auto` AB magnitudes and are
-sorted by brightness for fast cumulative counting. The inner-regime arrays are
-different: they use the selected `f_aper_nat` core aperture for every
-nonstellar source with a finite core magnitude, without applying the S/N or
-compactness selection.
+The resulting point-source magnitudes are total `f_auto` AB magnitudes. 
+The inner-regime arrays are different, they use the selected `f_aper_nat` core 
+aperture for every nonstellar source without applying the S/N or compactness selection.
 
 ### Encircled-energy corrections
 
@@ -140,7 +137,8 @@ packaged reference data are:
 
 The survey areas used to convert counts to surface densities are 1932, 1930,
 1282, 1930, 1241, and 1936 arcmin^2 for F115W, F150W, F200W, F277W, F356W,
-and F444W, respectively.
+and F444W, respectively. This was calculated by binning a position map by RA and Dec
+and tallying the area of the boxes that contain sources.
 
 ## Probability calculation
 
@@ -153,11 +151,10 @@ In the background-limited region, the total-flux limit is
 
 `m_total,lim = m_host,AB + delta_mag`.
 
-Because smaller magnitudes are brighter, the code counts catalog magnitudes
-strictly brighter than each limit. The cumulative count is divided by the
-filter-specific COSMOS-3D survey area to obtain a surface density in
-arcmin^-2. The expected number inside radius `r` is then calculated by
-integrating circular annuli:
+The code counts catalog magnitudes strictly brighter than each limit. 
+The cumulative count is divided by the filter-specific COSMOS-3D survey area 
+to obtain a surface density in arcmin^-2. The expected number inside radius `r` 
+is then calculated by integrating circular annuli:
 
 `lambda(r) = integral[0 to r] 2 pi r' Sigma(r') dr'`,
 
@@ -179,22 +176,22 @@ Contrast-less mode instead includes radius zero explicitly.
 Selecting **Use fiducial Carter F444W curve** fixes the filter to F444W and
 provides the Carter et al. (2023) curve. The code uses the Carter fiducial pair
 `m_F444W = 9.76` AB at 109 pc, corresponding to the quoted absolute magnitude
-4.57 AB. It identifies the faintest point of the digitized curve as the
+4.57 AB. It identifies the faintest point of the magnitude limit curve as the
 fiducial background limit, converts the total limit and background limit to
 flux, and subtracts the background flux to obtain the host-dependent residual.
 That residual is scaled by the target host's apparent-flux offset, the selected
 background flux floor is added back, and the resulting flux limit is converted
-to delta magnitude relative to the entered host magnitude. The user must supply
-the background-limiting F444W magnitude for the new observation. This is an
-approximate transformation for planning; a measured observation-specific curve
+to the new magnitude limit curve. The user must supply the background-limiting 
+F444W magnitude for the new observation. This is an approximate transformation 
+for planning or speculation; a measured observation-specific curve
 should be used whenever available.
 
 ## Contrast-less mode
 
 Contrast-less mode is intended for observations of very faint infrared hosts,
-including white dwarfs, where the field can be treated as background limited. It
+such as white dwarfs, where the field can be treated as background limited. It
 ignores the contrast curve, host-star magnitude, region cutoff, and core-aperture
-choice. The complete selected-filter point-source list is divided by that
+choice. The selected-filter point-source count is divided by that
 filter's survey area to make a constant surface density, which is integrated
 from zero separation. This mode is not equivalent to setting the region cutoff
 to zero in a normal calculation, because a normal calculation still applies its
@@ -211,29 +208,24 @@ unbounded; if both bounds for a quantity are blank, that quantity imposes no
 restriction.
 
 The CMD itself uses only sources with `type_in_3d == 0` (the catalog galaxy
-class), F444W total-flux S/N greater than 5, and finite F200W and F444W total
-magnitudes. AB magnitudes are converted to Vega using offsets of 1.71 mag for
+class). AB magnitudes are converted to Vega using offsets of 1.71 mag for
 F200W and 3.25 mag for F444W. The displayed CMD uses 0.25-mag color bins from
 -1 to 5 and 0.5-mag F444W bins from 13 to 27, divided by the 1282 arcmin^2
 COSMOS-3D F200W area. Empty bins are white and populated bins are shown on a
-logarithmic objects-per-arcmin^2-per-bin scale.
+logarithmic objects-per-arcmin^2 bin scale.
 
 Planetary tracks are shown at 10, 100, and 1000 Myr and shifted from absolute
 F444W magnitude to the entered distance using the distance modulus
 `5 log10(d / 10 pc)`. The available overlays are Sonora Bobcat, ATMO 2020, and
-Sonora Flame Skimmer. Their tracks are a model-comparison diagnostic, not an
-additional term in the contamination probability.
+Sonora Flame Skimmer.
 
 ## Packaged reference data
 
 The repository already includes the compact reference data needed by the app in
 `data/cosmos3d_reference.npz`. No additional catalogs, calibration files, or
-source-data downloads are required to run MIRAGE. The original survey catalogs
-used to create this packaged artifact are not part of the public release.
-Rebuilding the artifact is a maintainer-only operation requiring separately
-managed source data.
+source-data downloads are required to run MIRAGE.
 
-## Run locally
+## Run locally (For offline use)
 
 ```powershell
 python -m venv .venv
@@ -250,6 +242,5 @@ It does not model galaxy clustering, target-field cosmic variance, extinction,
 source variability, or candidate-specific astrometry. The transition radius,
 compactness intervals, encircled-energy values, catalog completeness, and
 contrast-curve calibration are all potential sources of systematic error. The
-tool is intended for observation planning and candidate vetting; its probability
-is not, by itself, a classification of an individual candidate as planetary or
-extragalactic.
+tool is intended for observation planning and candidate vetting; the probability
+is not a classification of an individual candidate as planetary or extragalactic.
