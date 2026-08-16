@@ -618,29 +618,57 @@ def probability_figure(result: ContaminationResult):
         left_edge = plot_min
         right_edge = float(result.radius_arcsec[-1])
         cutoff = float(result.region_cutoff_arcsec)
+        plot_span = max(right_edge - left_edge, np.finfo(float).eps)
+        left_span = cutoff - left_edge
+        right_span = right_edge - cutoff
+        # Keep the two labels visually consistent.  If either regime occupies
+        # only a small fraction of the displayed x-range, horizontal text can
+        # extend beyond the axes, so place both labels vertically beside the
+        # cutoff instead.
+        vertical_labels = min(left_span, right_span) / plot_span < 0.14
         if cutoff > left_edge:
+            if vertical_labels:
+                contrast_x = cutoff - 0.035 * plot_span
+                contrast_ha = "right"
+                contrast_rotation = 90
+            else:
+                contrast_x = cutoff - 0.08 * left_span
+                contrast_ha = "right"
+                contrast_rotation = 0
             ax.text(
-                cutoff - 0.08 * (cutoff - left_edge),
+                contrast_x,
                 0.98,
                 "Contrast limited",
                 transform=ax.get_xaxis_transform(),
-                ha="right",
+                ha=contrast_ha,
                 va="top",
                 color="#555555",
                 fontsize=9,
+                rotation=contrast_rotation,
+                rotation_mode="anchor",
                 bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none", "pad": 2.0},
                 zorder=5,
             )
         if cutoff < right_edge:
+            if vertical_labels:
+                background_x = cutoff + 0.035 * plot_span
+                background_ha = "left"
+                background_rotation = 90
+            else:
+                background_x = cutoff + 0.08 * right_span
+                background_ha = "left"
+                background_rotation = 0
             ax.text(
-                cutoff + 0.08 * (right_edge - cutoff),
+                background_x,
                 0.98,
                 "Background limited",
                 transform=ax.get_xaxis_transform(),
-                ha="left",
+                ha=background_ha,
                 va="top",
                 color="#555555",
                 fontsize=9,
+                rotation=background_rotation,
+                rotation_mode="anchor",
                 bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none", "pad": 2.0},
                 zorder=5,
             )

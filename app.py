@@ -139,7 +139,7 @@ with st.sidebar.form("inputs"):
             ),
         )
         host_magnitude = st.number_input(
-            "Host-star magnitude (AB)", value=9.76, step=0.05, format="%.3f"
+            "Host-star apparent magnitude (AB)", value=9.76, step=0.05, format="%.3f"
         )
     else:
         uploaded_curve = st.file_uploader(
@@ -157,7 +157,7 @@ with st.sidebar.form("inputs"):
             }[value],
         )
         host_magnitude = st.number_input(
-            "Host-star magnitude (AB)", value=9.76, step=0.05, format="%.3f"
+            "Host-star apparent magnitude (AB)", value=9.76, step=0.05, format="%.3f"
         )
     with st.expander("Color-magnitude constraints"):
         apply_cmd_constraint = st.checkbox(
@@ -516,6 +516,7 @@ with st.expander("Method and assumptions"):
 - The point-source count is divided by the {filter_name.upper()} survey area to obtain a constant sky density.
 - When enabled, color-magnitude constraints use the Vega F200W-F444W color range and the AB magnitude range in {filter_name.upper()}.
 - Background sources are assumed to follow a spatial Poisson distribution.
+- For additional details and references, see the [MIRAGE README on GitHub](https://github.com/waflfs/MIRAGE).
 """
         )
     else:
@@ -531,7 +532,7 @@ with st.expander("Method and assumptions"):
 """
         st.markdown(
             f"""
-- Contrast limits are combined with the entered **AB** host star magnitude.
+- Contrast limits are combined with the entered **AB apparent host-star magnitude**.
 - For separations below {region_cutoff:g} arcsec, the limiting core magnitude is
   `host star magnitude + delta magnitude - 2.5 log10(encircled energy)`.
 - At and beyond {region_cutoff:g} arcsec, the total-magnitude limit is `host star magnitude + delta magnitude`.
@@ -539,6 +540,7 @@ with st.expander("Method and assumptions"):
 - When enabled, color-magnitude constraints use the Vega F200W-F444W color range and the AB magnitude range in the selected contrast-curve filter, combined with the contrast/aperture detection limit.
 - The final contrast value is held constant beyond the uploaded curve's outermost point.
 - Background sources are assumed to follow a spatial Poisson distribution.
+- For additional details and references, see the [MIRAGE README on GitHub](https://github.com/waflfs/MIRAGE).
 {carter_method}
 """
         )
