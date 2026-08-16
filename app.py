@@ -540,7 +540,7 @@ with st.expander("Method and assumptions"):
 - When enabled, color-magnitude constraints use the Vega F200W-F444W color range and the AB magnitude range in the selected contrast-curve filter, combined with the contrast/aperture detection limit.
 - The final contrast value is held constant beyond the uploaded curve's outermost point.
 - Background sources are assumed to follow a spatial Poisson distribution.
-- For additional details and references, see the [MIRAGE README on GitHub](https://github.com/waflfs/MIRAGE).
 {carter_method}
+- For additional details and references, see the [MIRAGE README on GitHub](https://github.com/waflfs/MIRAGE).
 """
         )

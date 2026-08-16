@@ -626,48 +626,36 @@ def probability_figure(result: ContaminationResult):
         # extend beyond the axes, so place both labels vertically beside the
         # cutoff instead.
         vertical_labels = min(left_span, right_span) / plot_span < 0.14
+        label_y = 0.72 if vertical_labels else 0.98
+        label_va = "center" if vertical_labels else "top"
         if cutoff > left_edge:
-            if vertical_labels:
-                contrast_x = cutoff - 0.035 * plot_span
-                contrast_ha = "right"
-                contrast_rotation = 90
-            else:
-                contrast_x = cutoff - 0.08 * left_span
-                contrast_ha = "right"
-                contrast_rotation = 0
+            contrast_x = cutoff - 0.08 * left_span
             ax.text(
                 contrast_x,
-                0.98,
+                label_y,
                 "Contrast limited",
                 transform=ax.get_xaxis_transform(),
-                ha=contrast_ha,
-                va="top",
+                ha="right",
+                va=label_va,
                 color="#555555",
                 fontsize=9,
-                rotation=contrast_rotation,
+                rotation=90 if vertical_labels else 0,
                 rotation_mode="anchor",
                 bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none", "pad": 2.0},
                 zorder=5,
             )
         if cutoff < right_edge:
-            if vertical_labels:
-                background_x = cutoff + 0.035 * plot_span
-                background_ha = "left"
-                background_rotation = 90
-            else:
-                background_x = cutoff + 0.08 * right_span
-                background_ha = "left"
-                background_rotation = 0
+            background_x = cutoff + 0.08 * right_span
             ax.text(
                 background_x,
-                0.98,
+                label_y,
                 "Background limited",
                 transform=ax.get_xaxis_transform(),
-                ha=background_ha,
-                va="top",
+                ha="left",
+                va=label_va,
                 color="#555555",
                 fontsize=9,
-                rotation=background_rotation,
+                rotation=90 if vertical_labels else 0,
                 rotation_mode="anchor",
                 bbox={"facecolor": "white", "alpha": 0.8, "edgecolor": "none", "pad": 2.0},
                 zorder=5,
