@@ -11,8 +11,12 @@ interpreted with the assumptions and limitations documented below.
 
 ## Using MIRAGE
 
-The hosted Streamlit application link will be added here when deployment is
-complete. In the hosted app, choose the observing inputs in the sidebar, select
+The hosted Streamlit application is available at
+[mirage.streamlit.app](https://mirage.streamlit.app/):
+
+[![Open MIRAGE](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://mirage.streamlit.app/)
+
+In the hosted app, choose the observing inputs in the sidebar, select
 **Calculate**, and download the probability table or figures from the results
 page. The repository also contains everything needed for an offline run:
 
@@ -319,3 +323,8 @@ compactness intervals, encircled-energy values, catalog completeness, and
 contrast-curve calibration are all potential sources of systematic error. The
 tool is intended for observation planning and candidate vetting; the probability
 is not a classification of an individual candidate as planetary or extragalactic.
+
+## Credits
+
+- **Tomas Forney, Caitlin Casey, Brendan Bowler** — scientific design, methodology, and project direction.
+- **OpenAI Codex** — software and deployment assistance.
