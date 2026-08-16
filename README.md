@@ -9,6 +9,25 @@ the aperture-photometry method for calculation contamination described by Forney
 This is a public beta for exploratory scientific use. Results should be
 interpreted with the assumptions and limitations documented below.
 
+## Use MIRAGE
+
+The hosted Streamlit application link will be added here when deployment is
+complete. In the hosted app, choose the observing inputs in the sidebar, select
+**Calculate**, and download the probability table or figures from the results
+page. The repository also contains everything needed for an offline run:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+streamlit run app.py
+```
+
+The app does not require the original COSMOS-3D catalog or the raw planetary
+model archives at runtime; the compact reference and track files in `data/`
+are already packaged with the repository. See [Inputs and units](#inputs-and-units)
+before interpreting a result.
+
 ## What the app calculates
 
 For a supplied contrast curve, MIRAGE calculates the cumulative probability of
@@ -214,10 +233,66 @@ F200W and 3.25 mag for F444W. The displayed CMD uses 0.25-mag color bins from
 COSMOS-3D F200W area. Empty bins are white and populated bins are shown on a
 logarithmic objects-per-arcmin^2 bin scale.
 
-Planetary tracks are shown at 10, 100, and 1000 Myr and shifted from absolute
-F444W magnitude to the entered distance using the distance modulus
-`5 log10(d / 10 pc)`. The available overlays are Sonora Bobcat, ATMO 2020, and
-Sonora Flame Skimmer.
+## Planetary-model grids and assumptions
+
+The planetary tracks are diagnostic overlays on the CMD; they do not enter the
+extragalactic-contamination probability. MIRAGE displays the 10, 100, and
+1000 Myr isochrones and marks the 2000, 1200, and 800 K locations when those 
+temperatures exist in a track. The model files provide synthetic Vega magnitudes in 
+F200W and F444W. The color is therefore unchanged with distance, while the F444W 
+magnitude is shifted from absolute magnitude to the entered system distance with
+`5 log10(d / 10 pc)`. No claim is made that an observed companion follows one
+of these tracks exactly; age, mass, composition, clouds, chemistry, and model
+physics can all move a real object away from the tracks.
+
+### Sonora Bobcat
+
+The Bobcat overlay is derived from the public Sonora Bobcat evolution and
+photometry release ([Marley et al. 2021](https://doi.org/10.3847/1538-4357/ac141d);
+[Zenodo data release](https://doi.org/10.5281/zenodo.5063476)). The selected
+branch is the cloudless, non-irradiated, rainout chemical-equilibrium grid at
+solar metallicity (`[M/H] = 0.0`) and solar C/O composition. The published
+model family spans approximately 200--2400 K and `3.25 <= log(g) <= 5.5` in
+cgs units; the CMD file is a compact subset prepared from its JWST synthetic
+photometry and evolution tables.
+
+The packaged NPZ contains precomputed arrays at several reference distances.
+At runtime, MIRAGE uses the smallest-distance reference array for each age
+(currently the 10 pc array) and applies the distance modulus above. It does not
+recompute the atmosphere, interpolate between metallicities, add clouds, or
+apply a non-equilibrium chemistry correction.
+
+### ATMO 2020
+
+The ATMO overlay uses the public ATMO 2020 evolutionary/atmosphere grids
+([Phillips et al. 2020](https://doi.org/10.1051/0004-6361/201937381)). ATMO
+2020 couples a one-dimensional radiative--convective atmosphere to an interior
+evolution calculation for roughly `0.001--0.075 M_sun` objects. The source
+release provides equilibrium-chemistry (CEQ), weak-mixing, and strong-mixing
+non-equilibrium branches; MIRAGE deliberately uses **CEQ only**, from files in
+`ATMO_CEQ/JWST_photometry/JWST_phot_NIRCAM_modA`.
+
+`build_atmo_tracks.py` reads the source mass tracks, rejects missing or zero
+F200W/F444W magnitudes, interpolates each valid sequence to 10, 100, and
+1000 Myr, and samples 300 uniformly spaced masses across the valid mass range.
+The F200W and F444W values are the source table's Vega synthetic photometry.
+The published atmosphere grid nominally spans `T_eff = 200--3000 K` and
+`log(g) = 2.5--5.5`, but the authors caution that the atmosphere is most
+reliable below about 2000 K because some high-temperature opacity sources are
+not included. MIRAGE preserves the supplied track values (subject to the CMD
+plot temperature cutoff) and only applies the distance-modulus shift.
+
+### Sonora Flame Skimmer
+
+The Flame Skimmer overlay is built from the public release documented at
+[`doi:10.5281/zenodo.20030439`](https://doi.org/10.5281/zenodo.20030439). MIRAGE
+selects the cloud-free, equilibrium-chemistry branch with `[M/H] = 0.0` and
+C/O scaling `= 1.0` (the solar C/O branch, approximately C/O = 0.458 in the
+release). `build_flameskimmer_tracks.py` interpolates the evolution tables in
+log age at 10, 100, and 1000 Myr, then interpolates the corresponding JWST
+F200W/F444W magnitudes over the release's `(T_eff, log(g))` photometry grid.
+Other Flame Skimmer metallicities, C/O ratios, and non-equilibrium branches
+are not used by the current MIRAGE overlay.
 
 ## Packaged reference data
 
