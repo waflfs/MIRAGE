@@ -9,7 +9,7 @@ the aperture-photometry method for calculation contamination described by Forney
 This is a public beta for exploratory scientific use. Results should be
 interpreted with the assumptions and limitations documented below.
 
-## Use MIRAGE
+## Using MIRAGE
 
 The hosted Streamlit application link will be added here when deployment is
 complete. In the hosted app, choose the observing inputs in the sidebar, select
