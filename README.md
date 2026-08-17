@@ -63,6 +63,9 @@ The transition is applied as `radius < region cutoff` for the inner regime and
   or F444W.
 - Host-star magnitude in **AB magnitudes** in the selected contrast-curve
   filter.
+- In contrast-less mode, a required background limiting magnitude in **AB
+  magnitudes** in the selected filter. This is the total-magnitude detection
+  threshold applied to the point-source population.
 - Region cutoff in arcseconds.
 - Core-aperture diameter: 0.05, 0.1, 0.2, or 0.3 arcsec.
 - System distance in parsecs. Distance is used for the planetary CMD tracks and
@@ -216,9 +219,13 @@ such as white dwarfs, where the field can be treated as background limited. It
 ignores the contrast curve, host-star magnitude, region cutoff, and core-aperture
 choice. The selected-filter point-source count is divided by that
 filter's survey area to make a constant surface density, which is integrated
-from zero separation. This mode is not equivalent to setting the region cutoff
-to zero in a normal calculation, because a normal calculation still applies its
-contrast-derived detection limit to the point-source population.
+from zero separation. Only point-like sources with total AB magnitudes strictly
+brighter than the user-entered background limiting magnitude are included. The
+optional color-magnitude constraint is then applied as an additional mask to
+that detection-limited population. This mode is not equivalent to setting the
+region cutoff to zero in a normal calculation, because a normal calculation
+still applies its contrast-derived detection limit to the point-source
+population.
 
 ## Color-magnitude constraints and CMD
 

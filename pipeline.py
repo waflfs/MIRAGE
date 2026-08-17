@@ -482,16 +482,24 @@ def calculate_contamination(
 def calculate_contrastless_contamination(
     reference_pack: dict[str, np.ndarray],
     filter_name: str,
+    background_limiting_magnitude_ab: float,
     max_radius_arcsec: float = 10.0,
     cmd_color_range: tuple[float | None, float | None] | None = None,
     cmd_magnitude_range: tuple[float | None, float | None] | None = None,
     samples: int = 900,
     min_radius_arcsec: float | None = None,
 ) -> ContaminationResult:
-    """Calculate an entirely background-limited point-source contamination curve."""
+    """Calculate a background-limited point-source contamination curve.
+
+    Only point-like catalog sources brighter than ``background_limiting_magnitude_ab``
+    are included. Any CMD constraint is an additional selection on this
+    detection-limited population.
+    """
     filter_name = filter_name.lower()
     if filter_name not in FILTERS:
         raise ValueError(f"Unsupported filter: {filter_name}")
+    if not np.isfinite(background_limiting_magnitude_ab):
+        raise ValueError("Background limiting magnitude must be finite.")
     if max_radius_arcsec <= 0:
         raise ValueError("Maximum radius must be positive.")
     requested_min = 0.0 if min_radius_arcsec is None else float(min_radius_arcsec)
@@ -509,7 +517,11 @@ def calculate_contrastless_contamination(
     )
     point_magnitudes = np.asarray(reference_pack[f"point_{filter_name}"], dtype=float)
     survey_area = float(np.asarray(reference_pack[f"area_{filter_name}"]).item())
-    density_value = point_magnitudes.size / survey_area
+    detectable_point_sources = (
+        np.isfinite(point_magnitudes)
+        & (point_magnitudes < float(background_limiting_magnitude_ab))
+    )
+    density_value = np.count_nonzero(detectable_point_sources) / survey_area
     density = np.full(radius.shape, density_value, dtype=float)
     expected = integrate_surface_density(radius, density)
     probability = poisson_probability(expected)
@@ -529,7 +541,16 @@ def calculate_contrastless_contamination(
                 "The reference pack lacks CMD source mappings. Rebuild it with build_reference_pack.py."
             )
         point_indices = np.asarray(reference_pack[point_index_key], dtype=np.int64)
-        constrained_count = int(np.count_nonzero(constraint_mask[point_indices]))
+        if point_indices.shape != point_magnitudes.shape:
+            raise ValueError(
+                "The reference pack has inconsistent point-source CMD mappings. "
+                "Rebuild it with build_reference_pack.py."
+            )
+        constrained_count = int(
+            np.count_nonzero(
+                detectable_point_sources & constraint_mask[point_indices]
+            )
+        )
         constrained_density = np.full(
             radius.shape,
             constrained_count / survey_area,
@@ -541,7 +562,9 @@ def calculate_contrastless_contamination(
     return ContaminationResult(
         radius_arcsec=radius,
         delta_mag=np.full(radius.shape, np.nan),
-        limiting_magnitude=np.full(radius.shape, np.nan),
+        limiting_magnitude=np.full(
+            radius.shape, float(background_limiting_magnitude_ab)
+        ),
         surface_density_arcmin2=density,
         expected_number=expected,
         probability=probability,
@@ -845,12 +868,14 @@ def result_csv_bytes(result: ContaminationResult) -> bytes:
     if result.contrast_less:
         columns = [
             result.radius_arcsec,
+            result.limiting_magnitude,
             result.surface_density_arcmin2,
             result.expected_number,
             result.probability,
         ]
         header_fields = [
             "radius_arcsec",
+            "background_limiting_ab_mag",
             "surface_density_arcmin2",
             "expected_number",
             "probability",

@@ -90,8 +90,9 @@ contrast_less = st.sidebar.checkbox(
     "Contrast-less",
     value=False,
     help=(
-        "Treat the entire field as background limited and use the full selected-filter "
-        "COSMOS-3D point-source density. Changes take effect when you press Calculate."
+        "Treat the entire field as background limited, applying a user-supplied "
+        "selected-filter detection limit to COSMOS-3D point sources. Changes take "
+        "effect when you press Calculate."
     ),
 )
 use_carter_curve = False
@@ -120,13 +121,28 @@ with st.sidebar.form("inputs"):
         uploaded_curve = None
         contrast_kind = "auto"
         carter_background_limit = None
+        contrastless_background_limit = st.number_input(
+            f"Background limiting magnitude ({filter_name.upper()}, AB)",
+            min_value=0.0,
+            value=24.0,
+            step=0.05,
+            format="%.3f",
+            help=(
+                "Total-magnitude detection limit for the observation. The main curve "
+                "counts only COSMOS-3D point sources strictly brighter than this value."
+            ),
+        )
         host_magnitude = np.nan
         region_cutoff = 0.0
         core_diameter = 0.2
-        st.caption("Contrast curve, host magnitude, region cutoff, and core aperture are not used.")
+        st.caption(
+            "Contrast curve, host magnitude, region cutoff, and core aperture are not used. "
+            "The background limiting magnitude sets the detection threshold."
+        )
     elif use_carter_curve:
         uploaded_curve = None
         contrast_kind = "auto"
+        contrastless_background_limit = None
         carter_background_limit = st.number_input(
             "Background limiting magnitude (F444W, AB)",
             min_value=0.0,
@@ -156,6 +172,7 @@ with st.sidebar.form("inputs"):
                 "delta_mag": "Delta magnitude",
             }[value],
         )
+        contrastless_background_limit = None
         host_magnitude = st.number_input(
             "Host-star apparent magnitude (AB)", value=9.76, step=0.05, format="%.3f"
         )
@@ -240,8 +257,9 @@ if not submitted and calculation_state is None:
     st.info("Choose the observation inputs and select **Calculate**.")
     if contrast_less:
         st.markdown(
-            "Contrast-less mode treats the full field as background limited and uses "
-            "the selected filter's complete COSMOS-3D point-source population."
+            "Contrast-less mode treats the full field as background limited and counts "
+            "only selected-filter COSMOS-3D point sources brighter than the entered "
+            "background limiting magnitude."
         )
     else:
         st.markdown(
@@ -269,7 +287,8 @@ if submitted:
     if contrast_less:
         curve_source = None
         st.info(
-            f"Contrast-less mode: using the full {filter_name.upper()} point-source surface density."
+            f"Contrast-less mode: using {filter_name.upper()} point sources brighter than "
+            f"{float(contrastless_background_limit):.2f} AB."
         )
     else:
         if use_carter_curve:
@@ -297,6 +316,7 @@ if submitted:
             result = calculate_contrastless_contamination(
                 reference_pack=reference_pack,
                 filter_name=filter_name,
+                background_limiting_magnitude_ab=float(contrastless_background_limit),
                 max_radius_arcsec=float(max_radius),
                 min_radius_arcsec=float(min_radius),
                 cmd_color_range=cmd_color_range,
@@ -353,6 +373,9 @@ if submitted:
         "max_radius": float(max_radius),
         "filter_name": filter_name,
         "contrast_less": bool(contrast_less),
+        "contrastless_background_limit_mag": (
+            float(contrastless_background_limit) if contrast_less else None
+        ),
         "uses_carter_rescaling": uses_carter_rescaling,
         "carter_target_absolute_mag": carter_target_absolute_mag,
         "carter_host_offset_mag": carter_host_offset_mag,
@@ -372,6 +395,7 @@ else:
     max_radius = calculation_state["max_radius"]
     filter_name = calculation_state["filter_name"]
     contrast_less = calculation_state["contrast_less"]
+    contrastless_background_limit = calculation_state.get("contrastless_background_limit_mag")
     uses_carter_rescaling = calculation_state.get("uses_carter_rescaling", False)
     carter_target_absolute_mag = calculation_state.get("carter_target_absolute_mag")
     carter_host_offset_mag = calculation_state.get("carter_host_offset_mag")
@@ -449,8 +473,9 @@ with left:
     st.pyplot(probability_plot, width="stretch")
     if contrast_less:
         probability_caption = (
-            f"Cumulative probability using the full {filter_name.upper()} COSMOS-3D "
-            "point-source surface density. The entire field is background limited."
+            f"Cumulative probability using COSMOS-3D {filter_name.upper()} point sources "
+            f"brighter than {float(contrastless_background_limit):.2f} AB. The entire "
+            "field is background limited."
         )
     else:
         probability_caption = (
@@ -512,7 +537,7 @@ with st.expander("Method and assumptions"):
         st.markdown(
             f"""
 - Contrast-less mode ignores the contrast curve, host magnitude, region cutoff, and core aperture.
-- The entire field is background limited and uses all COSMOS-3D sources classified as point-like in {filter_name.upper()}.
+- The entire field is background limited. Only COSMOS-3D sources classified as point-like in {filter_name.upper()} and brighter than the entered background limiting magnitude are counted.
 - The point-source count is divided by the {filter_name.upper()} survey area to obtain a constant sky density.
 - When enabled, color-magnitude constraints use the Vega F200W-F444W color range and the AB magnitude range in {filter_name.upper()}.
 - Background sources are assumed to follow a spatial Poisson distribution.

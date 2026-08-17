@@ -64,17 +64,18 @@ def test_calculation_switches_catalog_population_at_cutoff() -> None:
     assert np.all(np.diff(result.probability) >= 0)
 
 
-def test_contrastless_uses_full_point_source_density() -> None:
+def test_contrastless_applies_background_limit_before_cmd_constraints() -> None:
     pack = {
-        "point_f444w": np.array([18.0, 20.0], dtype=np.float32),
+        "point_f444w": np.array([18.0, 20.0, 22.0], dtype=np.float32),
         "area_f444w": np.array(100.0),
-        "constraint_cmd_color_vega": np.array([0.0, 1.0], dtype=np.float32),
-        "constraint_total_f444w_ab": np.array([18.0, 20.0], dtype=np.float32),
-        "constraint_point_index_f444w": np.array([0, 1], dtype=np.int32),
+        "constraint_cmd_color_vega": np.array([0.0, 1.0, 2.0], dtype=np.float32),
+        "constraint_total_f444w_ab": np.array([18.0, 20.0, 22.0], dtype=np.float32),
+        "constraint_point_index_f444w": np.array([0, 1, 2], dtype=np.int32),
     }
     result = calculate_contrastless_contamination(
         pack,
         filter_name="f444w",
+        background_limiting_magnitude_ab=21.0,
         max_radius_arcsec=2.0,
         cmd_magnitude_range=(None, 19.0),
     )
