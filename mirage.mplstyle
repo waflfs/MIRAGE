@@ -1,0 +1,37 @@
+# MIRAGE plotting defaults, based on the project Matplotlib preferences.
+figure.figsize: 6, 5
+figure.dpi: 100
+savefig.dpi: 300
+figure.constrained_layout.use: True
+
+font.family: serif
+font.serif: Palatino Linotype
+font.size: 13
+legend.fontsize: 12
+text.usetex: False
+
+axes.labelsize: 15
+axes.titlesize: 16
+axes.linewidth: 1.5
+xtick.labelsize: 12
+ytick.labelsize: 12
+
+xtick.direction: in
+ytick.direction: in
+xtick.top: True
+ytick.right: True
+xtick.minor.visible: True
+ytick.minor.visible: True
+xtick.major.width: 1.4
+xtick.minor.width: 0.8
+xtick.major.size: 6
+xtick.minor.size: 3
+ytick.major.width: 1.4
+ytick.minor.width: 0.8
+ytick.major.size: 6
+ytick.minor.size: 3
+
+legend.frameon: False
+image.origin: lower
+lines.linewidth: 1.5
+errorbar.capsize: 2

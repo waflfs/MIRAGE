@@ -21,6 +21,11 @@ import numpy as np
 from scipy.integrate import cumulative_trapezoid
 
 
+# Keep MIRAGE's figures visually consistent in local and hosted deployments.
+# This bundled style mirrors the project's preferred Matplotlib parameters.
+plt.style.use(Path(__file__).with_name("mirage.mplstyle"))
+
+
 FILTERS = ("f115w", "f150w", "f200w", "f277w", "f356w", "f444w")
 CORE_DIAMETERS = (0.05, 0.1, 0.2, 0.3)
 ContrastKind = Literal["auto", "contrast", "delta_mag"]
@@ -585,7 +590,7 @@ def calculate_contrastless_contamination(
 
 
 def probability_figure(result: ContaminationResult):
-    fig, ax = plt.subplots(figsize=(7.2, 4.8), dpi=150, layout="constrained")
+    fig, ax = plt.subplots(figsize=(7.2, 4.8), dpi=100, layout="constrained")
     ax.plot(
         result.radius_arcsec,
         result.probability,
@@ -767,7 +772,7 @@ def cmd_figure(
     cmap = LinearSegmentedColormap.from_list("white_viridis", base_colors)
     cmap = cmap.with_extremes(bad="white")
 
-    fig, ax = plt.subplots(figsize=(7.4, 5.5), dpi=150, layout="constrained")
+    fig, ax = plt.subplots(figsize=(7.4, 5.5), dpi=100, layout="constrained")
     mesh = ax.pcolormesh(
         x_edges,
         y_edges,
@@ -838,7 +843,7 @@ def cmd_figure(
         handles=age_handles,
         loc="upper left",
         title="Age",
-        frameon=True,
+        frameon=False,
     )
     ax.text(
         0.98,
