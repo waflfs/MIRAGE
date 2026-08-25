@@ -26,12 +26,12 @@ COMPACTNESS_BOUNDS = {
     "f444w": (0.23, 0.30),
 }
 SURVEY_AREA_ARCMIN2 = {
-    "f115w": 1932.0,
-    "f150w": 1930.0,
-    "f200w": 1282.0,
-    "f277w": 1930.0,
-    "f356w": 1241.0,
-    "f444w": 1936.0,
+    "f115w": 1928.0,
+    "f150w": 1928.0,
+    "f200w": 1280.0,
+    "f277w": 1924.0,
+    "f356w": 1240.0,
+    "f444w": 1924.0,
 }
 
 
@@ -157,7 +157,7 @@ def build_pack(catalog_path: Path, types_path: Path, ee_path: Path, output_path:
     output["cmd_color_edges"] = color_edges.astype(np.float32)
     output["cmd_magnitude_edges"] = magnitude_edges.astype(np.float32)
     output["cmd_counts"] = counts.astype(np.int32)
-    output["cmd_area_arcmin2"] = np.array(1282.0)
+    output["cmd_area_arcmin2"] = np.array(SURVEY_AREA_ARCMIN2["f200w"])
     output["cmd_sample_size"] = np.array(int(np.count_nonzero(cmd_mask)))
     output["cmd_sparse_color"] = color_vega[cmd_mask][sparse_mask].astype(np.float32)
     output["cmd_sparse_magnitude"] = magnitude_vega[cmd_mask][sparse_mask].astype(np.float32)
