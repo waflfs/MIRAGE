@@ -306,15 +306,6 @@ The repository already includes the compact reference data needed by the app in
 `data/cosmos3d_reference.npz`. No additional catalogs, calibration files, or
 source-data downloads are required to run MIRAGE.
 
-## Run locally (For offline use)
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-streamlit run app.py
-```
-
 ## Scope and limitations
 
 The calculation assumes that the COSMOS-3D field represents the background
