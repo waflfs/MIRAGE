@@ -198,9 +198,10 @@ to that starting separation. Contrast-less mode instead includes radius zero exp
 ## Fiducial Carter F444W curve
 
 Selecting **Use fiducial Carter F444W curve** fixes the filter to F444W and
-provides the Carter et al. (2023) curve. The code first uses the Carter magnitude
-`m_F444W = 9.76` AB at 109 pc, corresponding to the quoted absolute magnitude
-4.57 AB. It identifies the faintest point of the magnitude limit curve as the
+provides the Carter et al. (2023) curve. The code first uses the HIP 65426
+magnitude `m_F444W = 6.764` Vega (Carter et al. 2023, Table 3), or 10.014 AB
+with an AB-minus-Vega offset of 3.25 mag, at 107.49 pc, corresponding to an
+absolute magnitude of 4.857 AB. It identifies the faintest point of the magnitude limit curve as the
 fiducial background limit, converts the total limit and background limit to
 flux, and subtracts the background flux to obtain the host-dependent residual.
 That residual is scaled by the target host's apparent-flux offset, the selected

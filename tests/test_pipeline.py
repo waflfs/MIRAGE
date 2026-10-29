@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pipeline import (
+    CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB,
+    CARTER_F444W_FIDUCIAL_DISTANCE_PC,
     calculate_contrastless_contamination,
     calculate_contamination,
     cmd_figure,
@@ -204,6 +206,8 @@ def test_plot_minimum_changes_view_without_truncating_calculation() -> None:
 
 def test_carter_rescaling_preserves_fiducial_and_background_floor() -> None:
     fiducial_delta = np.array([8.0, 10.0, 12.0], dtype=float)
+    fiducial_mag = CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB
+    fiducial_distance = CARTER_F444W_FIDUCIAL_DISTANCE_PC
     (
         rescaled_delta,
         target_absolute,
@@ -211,10 +215,12 @@ def test_carter_rescaling_preserves_fiducial_and_background_floor() -> None:
         fiducial_background_limit,
         background_limit,
     ) = (
-        rescale_carter_f444w_curve(fiducial_delta, 9.76, 109.0)
+        rescale_carter_f444w_curve(fiducial_delta, fiducial_mag, fiducial_distance)
     )
     np.testing.assert_allclose(rescaled_delta, fiducial_delta)
-    np.testing.assert_allclose(target_absolute, 9.76 - 5.0 * np.log10(109.0 / 10.0))
+    np.testing.assert_allclose(
+        target_absolute, fiducial_mag - 5.0 * np.log10(fiducial_distance / 10.0)
+    )
     np.testing.assert_allclose(host_offset, 0.0, atol=1e-12)
 
     (
@@ -223,9 +229,9 @@ def test_carter_rescaling_preserves_fiducial_and_background_floor() -> None:
         _,
         shifted_fiducial_background_limit,
         shifted_background_limit,
-    ) = rescale_carter_f444w_curve(fiducial_delta, 11.76, 109.0)
-    shifted_limit = 11.76 + shifted_delta
-    assert shifted_limit[0] > 9.76 + fiducial_delta[0]
+    ) = rescale_carter_f444w_curve(fiducial_delta, fiducial_mag + 2.0, fiducial_distance)
+    shifted_limit = fiducial_mag + 2.0 + shifted_delta
+    assert shifted_limit[0] > fiducial_mag + fiducial_delta[0]
     np.testing.assert_allclose(shifted_limit[-1], shifted_background_limit)
     np.testing.assert_allclose(shifted_background_limit, background_limit)
     np.testing.assert_allclose(fiducial_background_limit, background_limit)
@@ -237,13 +243,13 @@ def test_carter_rescaling_preserves_fiducial_and_background_floor() -> None:
     custom_background = 25.0
     custom_delta, _, _, decomposition_floor, applied_floor = rescale_carter_f444w_curve(
         fiducial_delta,
-        9.76,
-        109.0,
+        fiducial_mag,
+        fiducial_distance,
         background_limit_mag=custom_background,
     )
     np.testing.assert_allclose(decomposition_floor, fiducial_background_limit)
     np.testing.assert_allclose(applied_floor, custom_background)
-    np.testing.assert_allclose(np.max(9.76 + custom_delta), custom_background)
+    np.testing.assert_allclose(np.max(fiducial_mag + custom_delta), custom_background)
 
 
 def test_carter_hip65426_regression() -> None:
@@ -254,12 +260,12 @@ def test_carter_hip65426_regression() -> None:
         radius,
         delta_mag,
         filter_name="f444w",
-        host_star_magnitude_ab=9.76,
+        host_star_magnitude_ab=CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB,
         region_cutoff_arcsec=2.0,
         core_diameter_arcsec=0.2,
         max_radius_arcsec=10.0,
     )
-    assert 0.07 < result.probability[-1] < 0.08
+    assert 0.08 < result.probability[-1] < 0.09
     assert np.all(np.diff(result.probability) >= 0)
 
 

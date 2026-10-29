@@ -29,9 +29,11 @@ plt.style.use(Path(__file__).with_name("mirage.mplstyle"))
 FILTERS = ("f115w", "f150w", "f200w", "f277w", "f356w", "f444w")
 CORE_DIAMETERS = (0.05, 0.1, 0.2, 0.3)
 ContrastKind = Literal["auto", "contrast", "delta_mag"]
-CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB = 9.76
-CARTER_F444W_FIDUCIAL_ABSOLUTE_MAG_AB = 4.57
-CARTER_F444W_FIDUCIAL_DISTANCE_PC = 109.0
+# HIP 65426: m_F444W = 6.764 Vega (Carter et al. 2023, Table 3) + 3.25 AB-Vega,
+# at 107.49 pc (Carter et al. 2023, Sec. 1.2).
+CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB = 10.014
+CARTER_F444W_FIDUCIAL_ABSOLUTE_MAG_AB = 4.857
+CARTER_F444W_FIDUCIAL_DISTANCE_PC = 107.49
 
 
 @dataclass(frozen=True)
@@ -186,7 +188,7 @@ def rescale_carter_f444w_curve(
         + 5.0 * np.log10(system_distance_pc / CARTER_F444W_FIDUCIAL_DISTANCE_PC)
     )
     # The quoted Carter absolute magnitude is rounded. Calibrate the
-    # absolute-magnitude/distance relation to the documented m_F444W=9.76
+    # absolute-magnitude/distance relation to the documented m_F444W=10.014
     # fiducial pair so it exactly reproduces the supplied digitized curve.
     fiducial_zero_offset = (
         CARTER_F444W_FIDUCIAL_ABSOLUTE_MAG_AB

@@ -155,7 +155,10 @@ with st.sidebar.form("inputs"):
             ),
         )
         host_magnitude = st.number_input(
-            "Host-star apparent magnitude (AB)", value=9.76, step=0.05, format="%.3f"
+            "Host-star apparent magnitude (AB)",
+            value=CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB,
+            step=0.05,
+            format="%.3f",
         )
     else:
         uploaded_curve = st.file_uploader(
@@ -174,7 +177,10 @@ with st.sidebar.form("inputs"):
         )
         contrastless_background_limit = None
         host_magnitude = st.number_input(
-            "Host-star apparent magnitude (AB)", value=9.76, step=0.05, format="%.3f"
+            "Host-star apparent magnitude (AB)",
+            value=CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB,
+            step=0.05,
+            format="%.3f",
         )
     with st.expander("Color-magnitude constraints"):
         apply_cmd_constraint = st.checkbox(
