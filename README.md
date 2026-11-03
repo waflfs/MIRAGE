@@ -112,8 +112,13 @@ six filters:
   arcsec.
 
 The `type_in_3d` is the type parameter from COSMOS-Web 2025 matched by source
-position to sources in COSMOS-3D. Objects with `type_in_3d == 1` are treated as 
-stars and removed from the contamination counts. 
+position (nearest COSMOS-Web source within 0.1 arcsec) to sources in COSMOS-3D.
+Objects with `type_in_3d == 1` are treated as stars and removed from the
+contamination counts.
+
+Sources with `f_masked >= 0.5` (at least half of their pixels on the catalog's
+bright-star and diffraction-spike masks) are removed from every population:
+the core-aperture arrays, the point-source lists, and the CMD.
 
 ### Point-source selection for the background-limited regime
 
@@ -222,9 +227,9 @@ unbounded; if both bounds for a quantity are blank, that quantity imposes no
 restriction.
 
 The CMD itself uses only sources with `type_in_3d == 0` (the catalog galaxy
-class). AB magnitudes are converted to Vega using offsets of 1.71 mag for
+class) and `f_masked < 0.5`. AB magnitudes are converted to Vega using offsets of 1.71 mag for
 F200W and 3.25 mag for F444W. The displayed CMD uses 0.25-mag color bins from
--1 to 5 and 0.5-mag F444W bins from 13 to 27, divided by the 12820 arcmin^2
+-1 to 5 and 0.5-mag F444W bins from 13 to 27, divided by the 1280 arcmin^2
 COSMOS-3D F200W area. Empty bins are white and populated bins are shown on a
 logarithmic objects-per-arcmin^2 bin scale.
 

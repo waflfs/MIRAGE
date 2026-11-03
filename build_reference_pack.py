@@ -17,6 +17,9 @@ import numpy as np
 FILTERS = ("f115w", "f150w", "f200w", "f277w", "f356w", "f444w")
 APERTURES = (0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0)
 CORE_DIAMETERS = (0.05, 0.1, 0.2, 0.3)
+# Sources with at least this fraction of masked pixels sit on the bright-star
+# (diffraction-spike) masks and are excluded from every population.
+MAX_MASKED_FRACTION = 0.5
 COMPACTNESS_BOUNDS = {
     "f115w": (0.50, 0.75),
     "f150w": (0.50, 0.75),
@@ -46,15 +49,18 @@ def core_tag(core: float) -> str:
 
 def build_pack(catalog_path: Path, types_path: Path, ee_path: Path, output_path: Path) -> None:
     object_types = np.load(types_path, mmap_mode="r")
-    nonstellar = np.asarray(object_types != 1, dtype=bool)
-    galaxies = np.asarray(object_types == 0, dtype=bool)
+    with fits.open(catalog_path, memmap=True, mode="readonly") as hdul:
+        masked_fraction = np.asarray(hdul[1].data["f_masked"], dtype=float)
+    unmasked = masked_fraction < MAX_MASKED_FRACTION
+    nonstellar = np.asarray(object_types != 1, dtype=bool) & unmasked
+    galaxies = np.asarray(object_types == 0, dtype=bool) & unmasked
     nonstellar_catalog_indices = np.flatnonzero(nonstellar)
     nonstellar_positions = np.full(nonstellar.shape, -1, dtype=np.int32)
     nonstellar_positions[nonstellar_catalog_indices] = np.arange(
         nonstellar_catalog_indices.size, dtype=np.int32
     )
     output: dict[str, np.ndarray] = {
-        "schema_version": np.array("1.2"),
+        "schema_version": np.array("1.3"),
         "catalog_name": np.array("COSMOS-3D v1.2 merged"),
     }
 

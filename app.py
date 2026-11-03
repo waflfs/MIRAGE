@@ -567,7 +567,7 @@ with st.expander("Method and assumptions"):
 - For separations below {region_cutoff:g} arcsec, the limiting core magnitude is
   `host star magnitude + delta magnitude - 2.5 log10(encircled energy)`.
 - At and beyond {region_cutoff:g} arcsec, the total-magnitude limit is `host star magnitude + delta magnitude`.
-- Source densities come from the COSMOS-3D v1.2 merged catalog after removal of matched stars.
+- Source densities come from the COSMOS-3D v1.2 merged catalog after removal of matched stars and of sources on the bright-star masks (`f_masked >= 0.5`).
 - When enabled, color-magnitude constraints use the Vega F200W-F444W color range and the AB magnitude range in the selected contrast-curve filter, combined with the contrast/aperture detection limit.
 - The final contrast value is held constant beyond the uploaded curve's outermost point.
 - Background sources are assumed to follow a spatial Poisson distribution.

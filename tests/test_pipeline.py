@@ -265,7 +265,7 @@ def test_carter_hip65426_regression() -> None:
         core_diameter_arcsec=0.2,
         max_radius_arcsec=10.0,
     )
-    assert 0.08 < result.probability[-1] < 0.09
+    assert 0.065 < result.probability[-1] < 0.075
     assert np.all(np.diff(result.probability) >= 0)
 
 
