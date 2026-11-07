@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
 from pipeline import (
     CARTER_F444W_FIDUCIAL_APPARENT_MAG_AB,
     CORE_DIAMETERS,
+    FIGURE_LOCK,
     FILTERS,
     calculate_contrastless_contamination,
     calculate_contamination,
@@ -475,8 +475,13 @@ if (
 
 left, right = st.columns(2, gap="large")
 with left:
-    probability_plot = probability_figure(result)
-    st.pyplot(probability_plot, width="stretch")
+    # Render both PNGs under the lock (st.pyplot would draw outside it). 200 DPI
+    # matches st.pyplot's display default.
+    with FIGURE_LOCK:
+        probability_plot = probability_figure(result)
+        probability_png = figure_png_bytes(probability_plot, dpi=200)
+        probability_png_download = figure_png_bytes(probability_plot, dpi=300)
+    st.image(probability_png, width="stretch")
     if contrast_less:
         probability_caption = (
             f"Cumulative probability using COSMOS-3D {filter_name.upper()} point sources "
@@ -509,16 +514,18 @@ with left:
     )
     st.download_button(
         "Download probability plot (300 DPI)",
-        figure_png_bytes(probability_plot, dpi=300),
+        probability_png_download,
         file_name=f"{'contrastless' if contrast_less else 'contamination'}_{filter_name}_probability.png",
         mime="image/png",
         width="stretch",
         on_click="ignore",
     )
-    plt.close(probability_plot)
 with right:
-    cmd_plot = cmd_figure(reference_pack, planet_tracks, float(system_distance))
-    st.pyplot(cmd_plot, width="stretch")
+    with FIGURE_LOCK:
+        cmd_plot = cmd_figure(reference_pack, planet_tracks, float(system_distance))
+        cmd_png = figure_png_bytes(cmd_plot, dpi=200)
+        cmd_png_download = figure_png_bytes(cmd_plot, dpi=300)
+    st.image(cmd_png, width="stretch")
     st.caption(
         "Binned colors show the COSMOS-3D extragalactic population as objects per "
         "square arcminute per CMD bin; empty bins are white. Colors and magnitudes "
@@ -530,13 +537,12 @@ with right:
     )
     st.download_button(
         "Download CMD plot (300 DPI)",
-        figure_png_bytes(cmd_plot, dpi=300),
+        cmd_png_download,
         file_name=f"cosmos3d_cmd_{planet_model.lower().replace(' ', '_')}.png",
         mime="image/png",
         width="stretch",
         on_click="ignore",
     )
-    plt.close(cmd_plot)
 
 with st.expander("Method and assumptions"):
     if contrast_less:

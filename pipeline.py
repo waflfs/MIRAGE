@@ -9,12 +9,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from io import BytesIO, StringIO
 from pathlib import Path
+import threading
 from typing import BinaryIO, Literal
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, LogNorm
+from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.ticker import LogFormatterMathtext
 import numpy as np
@@ -24,6 +26,12 @@ from scipy.integrate import cumulative_trapezoid
 # Keep MIRAGE's figures visually consistent in local and hosted deployments.
 # This bundled style mirrors the project's preferred Matplotlib parameters.
 plt.style.use(Path(__file__).with_name("mirage.mplstyle"))
+
+# Matplotlib is not thread-safe, and Streamlit runs overlapping script threads
+# (a new click starts a rerun while the previous one may still be rendering,
+# and all sessions share one process). Hold this lock while building or saving
+# any figure. The figures are plain Figure objects, not pyplot-managed ones.
+FIGURE_LOCK = threading.RLock()
 
 
 FILTERS = ("f115w", "f150w", "f200w", "f277w", "f356w", "f444w")
@@ -592,7 +600,8 @@ def calculate_contrastless_contamination(
 
 
 def probability_figure(result: ContaminationResult):
-    fig, ax = plt.subplots(figsize=(7.2, 4.8), dpi=100, layout="constrained")
+    fig = Figure(figsize=(7.2, 4.8), dpi=100, layout="constrained")
+    ax = fig.subplots()
     ax.plot(
         result.radius_arcsec,
         result.probability,
@@ -774,7 +783,8 @@ def cmd_figure(
     cmap = LinearSegmentedColormap.from_list("white_viridis", base_colors)
     cmap = cmap.with_extremes(bad="white")
 
-    fig, ax = plt.subplots(figsize=(7.4, 5.5), dpi=100, layout="constrained")
+    fig = Figure(figsize=(7.4, 5.5), dpi=100, layout="constrained")
+    ax = fig.subplots()
     mesh = ax.pcolormesh(
         x_edges,
         y_edges,
