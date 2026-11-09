@@ -444,17 +444,17 @@ if (
         )
     )
 
-metric_1, metric_2 = st.columns(2)
+metric_1, metric_2 = st.columns(2, gap="large")
 metric_1.metric(
-    f"P(at least 1) at {separation_interest:g} arcsec",
+    rf"$P(X \geq 1)$ at {separation_interest:g} arcsec",
     f"{interest_probability:.2%}",
 )
 metric_2.metric(
     f"Expected contaminants within {separation_interest:g} arcsec",
     f"{interest_expected:.4f}",
 )
-metric_3, metric_4 = st.columns(2)
-metric_3.metric(f"P(at least 1) within {max_radius:g} arcsec", f"{result.probability[-1]:.2%}")
+metric_3, metric_4 = st.columns(2, gap="large")
+metric_3.metric(rf"$P(X \geq 1)$ within {max_radius:g} arcsec", f"{result.probability[-1]:.2%}")
 metric_4.metric(
     f"Expected contaminants within {max_radius:g} arcsec",
     f"{result.expected_number[-1]:.4f}",
@@ -463,9 +463,9 @@ if (
     result.probability_color_magnitude is not None
     and result.expected_number_color_magnitude is not None
 ):
-    constraint_metric_1, constraint_metric_2 = st.columns(2)
+    constraint_metric_1, constraint_metric_2 = st.columns(2, gap="large")
     constraint_metric_1.metric(
-        f"P(at least 1) with color-magnitude constraints at {separation_interest:g} arcsec",
+        rf"$P(X \geq 1)$ with color-magnitude constraints at {separation_interest:g} arcsec",
         f"{interest_probability_color_magnitude:.2%}",
     )
     constraint_metric_2.metric(
